@@ -1,0 +1,41 @@
+apply plugin: 'kotlin'
+apply plugin: 'kotlinx-serialization'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceSets {
+    main.kotlin.srcDirs = main.java.srcDirs = ['src']
+    test.kotlin.srcDirs = test.java.srcDirs = ['test']
+    main.resources.srcDirs = ['resources']
+    test.resources.srcDirs = ['testresources']
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "io.ktor:ktor-server-core:$ktor_version"
+    compile "io.ktor:ktor-websockets:$ktor_version"
+    compile "io.ktor:ktor-server-netty:$ktor_version"
+    compile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
+    compile "ch.qos.logback:logback-classic:$logback_version"
+}
+
+mainClassName = "io.ktor.server.netty.DevelopmentEngine"
+
+task cleanStatic(type: Delete) {
+    delete 'resources/static'
+}
+
+task deployStatic(type: Copy, dependsOn: 'cleanStatic') {
+    from fileTree('../client/build')
+    into 'resources/static'
+}
+
+processResources { dependsOn 'deployStatic' }
+clean { dependsOn 'cleanStatic' }
+build { dependsOn 'deployStatic' }
+
+shadowJar {
+    baseName = 'ringserver'
+    classifier = null
+    version = null
+}
